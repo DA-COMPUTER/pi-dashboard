@@ -68,7 +68,7 @@ cat > "${DOC_DIR}/README" <<'DOC'
 DevBoard v10.0 — cross-platform system monitor.
 Run: devboard
 First run opens the setup wizard in your browser.
-Docs: https://YOUR_USERNAME.github.io/devboard
+Docs: https://DA-COMPUTER.github.io/devboard
 DOC
 
 # ── 6. DEBIAN/control ────────────────────────────────────────
@@ -83,7 +83,7 @@ Description: DevBoard — cross-platform system monitor
  A self-hosted, browser-based dashboard providing live system stats,
  a terminal runner, file browser, Docker management, and more.
  Supports Linux, macOS, and Windows.
-Homepage: https://YOUR_USERNAME.github.io/devboard
+Homepage: https://DA-COMPUTER.github.io/devboard
 CTRL
 
 # ── 7. DEBIAN/postinst ───────────────────────────────────────
