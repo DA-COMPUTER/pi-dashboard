@@ -1,0 +1,21 @@
+# Build output — upload these to GitHub Releases, NOT the repo
+dist/
+build/
+*.spec.bak
+
+# DevBoard runtime files — user-specific, never commit
+config.json
+scripts.scr
+.dashignore
+logs/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
