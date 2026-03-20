@@ -29,12 +29,9 @@ python3 --version
 echo "  Python path: $(which python3)"
 
 # ── 2. Install build dependencies ────────────────────────────
-# Detect PEP 668 externally-managed environments (Raspberry Pi OS, Ubuntu 24.04+)
-PIP_FLAGS="--quiet --upgrade"
-if python3 -c "import sys; open(sys.prefix+'/EXTERNALLY-MANAGED')" 2>/dev/null; then
-    PIP_FLAGS="$PIP_FLAGS --break-system-packages"
-    echo "  Note: externally-managed environment detected, using --break-system-packages"
-fi
+# --break-system-packages is required on Raspberry Pi OS, Ubuntu 24.04+, and any
+# distro enforcing PEP 668. It is harmless on systems that don't need it.
+PIP_FLAGS="--quiet --upgrade --break-system-packages"
 
 echo "  Installing PyInstaller…"
 pip3 install $PIP_FLAGS pyinstaller
