@@ -112,6 +112,31 @@ def start_install() -> dict:
 def _log(msg: str):
     _install_state['output'] += msg + '\n'
 
+def _find_python() -> str:
+    """
+    Return the real python executable path.
+    When frozen by PyInstaller, sys.executable is the .exe bundle itself —
+    not python.exe — so we must find python on PATH instead.
+    """
+    import shutil
+    if getattr(sys, 'frozen', False):
+        # We are inside a PyInstaller bundle — find python on PATH
+        for candidate in ('python', 'python3', 'python.exe', 'python3.exe'):
+            found = shutil.which(candidate)
+            if found:
+                return found
+        # Last resort: check common Windows install locations
+        import os
+        for base in (os.environ.get('LOCALAPPDATA',''), os.environ.get('PROGRAMFILES','')):
+            for pattern in ('Python*\\python.exe', 'Python\\python.exe'):
+                import glob
+                matches = glob.glob(os.path.join(base, pattern))
+                if matches:
+                    return matches[0]
+        raise RuntimeError('Could not find python.exe on PATH. Please add Python to PATH and try again.')
+    return sys.executable
+
+
 def _do_install():
     pkgs = ['flask', 'psutil']
     # pywebview is not needed on Windows — we use browser mode there to avoid
@@ -121,12 +146,14 @@ def _do_install():
     if PLATFORM == 'Linux':
         pkgs.append('python-pam')
 
-    _log(f'[setup] Python  : {sys.executable}')
+    python_exe = _find_python()
+
+    _log(f'[setup] Python  : {python_exe}')
     _log(f'[setup] Packages: {", ".join(pkgs)}')
     _log(f'[setup] Platform: {PLATFORM}')
     _log('')
 
-    cmd = [sys.executable, '-m', 'pip', 'install', '--upgrade'] + pkgs
+    cmd = [python_exe, '-m', 'pip', 'install', '--upgrade'] + pkgs
     # On Linux outside a venv, pip may require --break-system-packages (PEP 668)
     if PLATFORM == 'Linux' and sys.prefix == sys.base_prefix:
         cmd.append('--break-system-packages')
