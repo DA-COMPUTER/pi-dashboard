@@ -46,10 +46,20 @@ def main():
         _load('uninstall').main()
 
     elif not _CONFIG.exists() or '--setup' in args:
-        sys.argv = [sys.argv[0]] + [a for a in args if a != '--setup']
+        # Force browser mode on Windows to avoid pywebview conflicts with
+        # Task Scheduler registration and double-window issues
+        import platform as _plat
+        cleaned = [a for a in args if a != '--setup']
+        if _plat.system() == 'Windows' and '--browser' not in cleaned:
+            cleaned.append('--browser')
+        sys.argv = [sys.argv[0]] + cleaned
         _load('setup').main()
 
     else:
+        # Force browser mode on Windows for the dashboard too
+        import platform as _plat
+        if _plat.system() == 'Windows' and '--browser' not in sys.argv:
+            sys.argv.append('--browser')
         _load('dashboard').main() if hasattr(_load('dashboard'), 'main') else \
             exec((_BASE / 'dashboard.py').read_text(), {'__name__': '__main__'})
 
