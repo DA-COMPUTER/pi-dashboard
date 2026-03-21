@@ -60,8 +60,7 @@ def main():
         import platform as _plat
         if _plat.system() == 'Windows' and '--browser' not in sys.argv:
             sys.argv.append('--browser')
-        _load('dashboard').main() if hasattr(_load('dashboard'), 'main') else \
-            exec((_BASE / 'dashboard.py').read_text(encoding='utf-8'), {'__name__': '__main__'})
+        _load('dashboard').main()
 
 
 if __name__ == '__main__':
