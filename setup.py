@@ -22,9 +22,9 @@ except ImportError:
     _webview      = None   # type: ignore
     _HAS_WEBVIEW  = False
 
-# ═══════════════════════════════════════════════════════
+# ======================================================═
 #  GLOBALS
-# ═══════════════════════════════════════════════════════
+# ======================================================═
 PLATFORM = platform.system()          # 'Linux' | 'Darwin' | 'Windows'
 BASE_DIR  = Path(__file__).parent.resolve()
 CONFIG_FILE = BASE_DIR / 'config.json'
@@ -32,9 +32,9 @@ _server     = None
 _install_state: dict = {'running': False, 'output': '', 'success': None}
 
 
-# ═══════════════════════════════════════════════════════
+# ======================================================═
 #  SYSTEM INFO
-# ═══════════════════════════════════════════════════════
+# ======================================================═
 def get_system_info() -> dict:
     return {
         'platform':        PLATFORM,
@@ -54,9 +54,9 @@ def _try_import(name: str) -> bool:
     except ImportError: return False
 
 
-# ═══════════════════════════════════════════════════════
+# ======================================================═
 #  PASSWORD HASHING  (stdlib only — scrypt → pbkdf2 fallback)
-# ═══════════════════════════════════════════════════════
+# ======================================================═
 def hash_password(password: str) -> str:
     salt = secrets.token_hex(16)
     try:
@@ -67,9 +67,9 @@ def hash_password(password: str) -> str:
         return f"pbkdf2${salt}${dk.hex()}"
 
 
-# ═══════════════════════════════════════════════════════
+# ======================================================═
 #  CONFIG WRITER
-# ═══════════════════════════════════════════════════════
+# ======================================================═
 def write_config(data: dict) -> dict:
     try:
         cfg = json.loads(CONFIG_FILE.read_text()) if CONFIG_FILE.exists() else {}
@@ -99,9 +99,9 @@ def write_config(data: dict) -> dict:
         return {'ok': False, 'error': str(e)}
 
 
-# ═══════════════════════════════════════════════════════
+# ======================================================═
 #  DEPENDENCY INSTALLER
-# ═══════════════════════════════════════════════════════
+# ======================================================═
 def start_install() -> dict:
     if _install_state['running']:
         return {'ok': False, 'error': 'Already running'}
@@ -135,16 +135,16 @@ def _do_install():
         proc.wait()
         ok = proc.returncode == 0
         _log('')
-        _log('[setup] ✓ Installation complete!' if ok else f'[setup] ✗ pip exited with code {proc.returncode}')
+        _log('[setup] + Installation complete!' if ok else f'[setup] x pip exited with code {proc.returncode}')
         _install_state.update({'running': False, 'success': ok})
     except Exception as e:
-        _log(f'[setup] ✗ {e}')
+        _log(f'[setup] x {e}')
         _install_state.update({'running': False, 'success': False})
 
 
-# ═══════════════════════════════════════════════════════
+# ======================================================═
 #  SERVICE REGISTRATION
-# ═══════════════════════════════════════════════════════
+# ======================================================═
 def register_service() -> dict:
     try:
         cfg = json.loads(CONFIG_FILE.read_text())
@@ -251,9 +251,9 @@ def _schtask(cfg: dict) -> dict:
     return {'ok': False, 'error': (r.stderr or r.stdout).strip()}
 
 
-# ═══════════════════════════════════════════════════════
+# ======================================================═
 #  SHORTCUTS
-# ═══════════════════════════════════════════════════════
+# ======================================================═
 def create_shortcut() -> dict:
     try:
         cfg  = json.loads(CONFIG_FILE.read_text())
@@ -332,9 +332,9 @@ def _windows_shortcuts(url: str, cfg: dict) -> list[str]:
     return created
 
 
-# ═══════════════════════════════════════════════════════
+# ======================================================═
 #  HTTP SERVER  (stdlib — no Flask)
-# ═══════════════════════════════════════════════════════
+# ======================================================═
 class SetupHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         path = self.path.split('?')[0]
@@ -387,9 +387,9 @@ def _find_free_port(start: int = 7331) -> int:
     raise RuntimeError('No free port available in range 7331-7350')
 
 
-# ═══════════════════════════════════════════════════════
+# ======================================================═
 #  WIZARD HTML
-# ═══════════════════════════════════════════════════════
+# ======================================================═
 WIZARD_HTML = r"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -850,9 +850,9 @@ document.getElementById('f-pw2').addEventListener('keydown', e => { if(e.key==='
 </html>"""
 
 
-# ═══════════════════════════════════════════════════════
+# ======================================================═
 #  CLOSE HELPER  (called by /api/finish and window-close)
-# ═══════════════════════════════════════════════════════
+# ======================================================═
 def _trigger_close() -> dict:
     """Return immediately so the HTTP response is sent, then close."""
     threading.Thread(target=_do_close, daemon=True).start()
@@ -876,20 +876,20 @@ def _do_close():
             pass
 
 
-# ═══════════════════════════════════════════════════════
+# ======================================================═
 #  ENTRY POINT
-# ═══════════════════════════════════════════════════════
+# ======================================================═
 def main():
     global _server
 
     print()
-    print('─' * 54)
-    print('  DevBoard — Setup Wizard')
+    print('-' * 54)
+    print('  DevBoard -- Setup Wizard')
     print(f'  Platform : {PLATFORM} ({platform.machine()})')
     print(f'  Python   : {sys.version.split()[0]}')
     print(f'  Base dir : {BASE_DIR}')
     print(f'  Window   : {"pywebview" if _HAS_WEBVIEW else 'browser (pywebview not installed)'}')
-    print('─' * 54)
+    print('-' * 54)
 
     # Start the stdlib HTTP server on a background daemon thread so it
     # doesn't block — both webview and browser modes need this.
@@ -901,7 +901,7 @@ def main():
 
     if _HAS_WEBVIEW and '--browser' not in sys.argv:
         # ── Native window mode ──────────────────────────────
-        print(f'\n  Opening setup window…')
+        print(f'\n  Opening setup window...')
         print('  Close the window or complete the wizard to exit.\n')
         win = _webview.create_window(
             'DevBoard — Setup',
@@ -922,9 +922,9 @@ def main():
         # ── Browser fallback ────────────────────────────────
         if '--no-browser' not in sys.argv:
             threading.Timer(0.7, lambda: webbrowser.open(url)).start()
-            print(f'\n  Wizard → {url}  (opening in browser…)')
+            print(f'\n  Wizard -> {url}  (opening in browser...)')
         else:
-            print(f'\n  Wizard → {url}')
+            print(f'\n  Wizard -> {url}')
         print('  Press Ctrl+C to cancel\n')
         try:
             srv_thread.join()   # block until /api/finish shuts the server
