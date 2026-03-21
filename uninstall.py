@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-DevBoard — Uninstaller
+DevBoard -- Uninstaller
 ==========================
 Reads config.json to find exactly what was installed and removes it.
 Does NOT require elevated privileges (everything was installed as the current user).
@@ -33,9 +33,9 @@ def _rm(path_str: str, label: str = ''):
         return
     try:
         p.unlink()
-        _removed.append(f'  ✓ removed: {tag}')
+        _removed.append(f'  + removed: {tag}')
     except Exception as e:
-        _failed.append(f'  ✗ could not remove {tag}: {e}')
+        _failed.append(f'  x could not remove {tag}: {e}')
 
 def _run(*cmd, ok_codes=(0,)) -> tuple[bool, str]:
     r = subprocess.run(list(cmd), capture_output=True, text=True)
@@ -57,7 +57,7 @@ def remove_service(inst: dict):
         ]:
             ok, out = _run(*cmd)
             label = ' '.join(cmd)
-            if ok: _removed.append(f'  ✓ {label}')
+            if ok: _removed.append(f'  + {label}')
             else:  _skipped.append(f'  - {label}  ({out or "already stopped/disabled"})')
         _run('systemctl', '--user', 'daemon-reload')
 
@@ -69,14 +69,14 @@ def remove_service(inst: dict):
         plist = inst.get('service_file', '')
         if plist:
             ok, out = _run('launchctl', 'unload', plist, ok_codes=(0, 1))
-            if ok: _removed.append(f'  ✓ launchctl unload {plist}')
+            if ok: _removed.append(f'  + launchctl unload {plist}')
             else:  _skipped.append(f'  - launchctl unload ({out})')
             _rm(plist, f'plist: {plist}')
 
     elif svc_type == 'schtask':
         name = inst.get('service_name', 'DevBoard')
         ok, out = _run('schtasks', '/delete', '/f', '/tn', name, ok_codes=(0,))
-        if ok: _removed.append(f'  ✓ schtasks /delete /tn {name}')
+        if ok: _removed.append(f'  + schtasks /delete /tn {name}')
         else:  _skipped.append(f'  - task not found: {name}  ({out})')
 
         vbs = inst.get('vbs', '')
@@ -84,7 +84,7 @@ def remove_service(inst: dict):
             _rm(vbs, f'launcher: {vbs}')
 
     else:
-        _skipped.append(f'  - unknown service type "{svc_type}" — skipped')
+        _skipped.append(f'  - unknown service type "{svc_type}" -- skipped')
 
 
 # ═══════════════════════════════════════════════════════
@@ -115,7 +115,7 @@ def try_remove_logs():
     if not entries:
         try:
             logs.rmdir()
-            _removed.append(f'  ✓ removed empty logs dir: {logs}')
+            _removed.append(f'  + removed empty logs dir: {logs}')
         except Exception:
             pass
     else:
@@ -127,9 +127,9 @@ def try_remove_logs():
 # ═══════════════════════════════════════════════════════
 def main():
     print()
-    print('─' * 54)
-    print('  DevBoard — Uninstaller')
-    print('─' * 54)
+    print('-' * 54)
+    print('  DevBoard -- Uninstaller')
+    print('-' * 54)
     print()
 
     if not CONFIG_FILE.exists():
@@ -145,13 +145,13 @@ def main():
         print(f'  Could not read config.json: {e}')
         sys.exit(1)
 
-    # ── Preview what will happen ──
+    # -- Preview what will happen --
     print('  The following will be removed:\n')
 
     if inst.get('service'):
         stype = inst.get('service_type', 'unknown')
         name  = inst.get('service_name') or inst.get('service_file', '')
-        print(f'  • Service ({stype})  {name}')
+        print(f'  - Service ({stype})  {name}')
 
     for key, label in [
         ('shortcut_desktop',   'Desktop shortcut'),
@@ -163,9 +163,9 @@ def main():
     ]:
         v = inst.get(key, '')
         if v:
-            print(f'  • {label}: {v}')
+            print(f'  - {label}: {v}')
 
-    print(f'  • {CONFIG_FILE}')
+    print(f'  - {CONFIG_FILE}')
     print()
 
     if '--yes' not in sys.argv:
@@ -178,32 +178,32 @@ def main():
 
     print()
 
-    # ── Execute ──
+    # -- Execute --
     if inst.get('service'):
-        print('  Stopping / removing service…')
+        print('  Stopping / removing service...')
         remove_service(inst)
 
-    print('  Removing shortcuts…')
+    print('  Removing shortcuts...')
     remove_shortcuts(inst)
 
-    print('  Removing config…')
+    print('  Removing config...')
     remove_config()
     try_remove_logs()
 
-    # ── Summary ──
+    # -- Summary --
     print()
-    print('─' * 54)
+    print('-' * 54)
     print('  Uninstall summary')
-    print('─' * 54)
+    print('-' * 54)
     for line in _removed:  print(line)
     for line in _skipped:  print(line)
     for line in _failed:   print(line)
 
     print()
     if _failed:
-        print('  ⚠  Some items could not be removed (see above).')
+        print('  !  Some items could not be removed (see above).')
     else:
-        print('  ✓  Uninstall complete.')
+        print('  +  Uninstall complete.')
 
     print(f'\n  You can safely delete the dashboard folder:\n    {BASE_DIR}\n')
 
