@@ -30,10 +30,10 @@ echo "  Python path: $(which python3)"
 
 # ── 2. Install build dependencies ────────────────────────────
 echo "  Installing PyInstaller…"
-pip3 install --quiet --upgrade pyinstaller
+python3 -m pip install --quiet --upgrade --break-system-packages pyinstaller
 
 echo "  Installing app dependencies…"
-pip3 install --quiet --upgrade flask psutil pywebview || \
+python3 -m pip install --quiet --upgrade --break-system-packages flask psutil pywebview || \
     echo "  WARNING: Some deps failed (may be ok if already present)"
 
 # ── 3. Clean ─────────────────────────────────────────────────
@@ -41,7 +41,7 @@ rm -rf build "dist/${APP_NAME}.app" "dist/${DMG_NAME}"
 
 # ── 4. PyInstaller → .app bundle ─────────────────────────────
 echo "  Running PyInstaller…"
-pyinstaller devboard.spec --noconfirm
+python3 -m PyInstaller devboard.spec --noconfirm
 
 APP_PATH="dist/${APP_NAME}.app"
 if [ ! -d "${APP_PATH}" ]; then
