@@ -139,7 +139,7 @@ def main():
         return
 
     try:
-        cfg  = json.loads(CONFIG_FILE.read_text())
+        cfg  = json.loads(CONFIG_FILE.read_text(encoding='utf-8'))
         inst = cfg.get('installed', {})
     except Exception as e:
         print(f'  Could not read config.json: {e}')
