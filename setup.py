@@ -118,25 +118,49 @@ def _log(msg: str):
 def _find_python() -> str:
     """
     Return the real python executable path.
-    When frozen by PyInstaller, sys.executable is the .exe bundle itself —
-    not python.exe — so we must find python on PATH instead.
+    When frozen by PyInstaller, sys.executable is the .exe bundle itself.
+    On Windows, python3 may be a Microsoft Store stub that does nothing —
+    so we validate candidates by actually running them before trusting them.
     """
-    import shutil
+    import shutil, subprocess, os, glob
+
+    def _is_real_python(path: str) -> bool:
+        """Return True if path is a working Python, not a Store stub."""
+        try:
+            r = subprocess.run(
+                [path, '--version'],
+                capture_output=True, timeout=3
+            )
+            return r.returncode == 0 and b'Python' in r.stdout + r.stderr
+        except Exception:
+            return False
+
     if getattr(sys, 'frozen', False):
-        # We are inside a PyInstaller bundle — find python on PATH
-        for candidate in ('python', 'python3', 'python.exe', 'python3.exe'):
+        # Prefer python.exe over python3 on Windows to avoid Store stubs
+        candidates = (
+            ['python.exe', 'python', 'python3.exe', 'python3']
+            if PLATFORM == 'Windows'
+            else ['python3', 'python3.exe', 'python', 'python.exe']
+        )
+        for candidate in candidates:
             found = shutil.which(candidate)
-            if found:
+            if found and _is_real_python(found):
                 return found
-        # Last resort: check common Windows install locations
-        import os
-        for base in (os.environ.get('LOCALAPPDATA',''), os.environ.get('PROGRAMFILES','')):
-            for pattern in ('Python*\\python.exe', 'Python\\python.exe'):
-                import glob
-                matches = glob.glob(os.path.join(base, pattern))
-                if matches:
-                    return matches[0]
-        raise RuntimeError('Could not find python.exe on PATH. Please add Python to PATH and try again.')
+
+        # Fallback: scan common Windows install locations
+        if PLATFORM == 'Windows':
+            for base in (os.environ.get('LOCALAPPDATA', ''),
+                         os.environ.get('PROGRAMFILES', ''),
+                         'C:\\Python313', 'C:\\Python312', 'C:\\Python311'):
+                for pattern in ('Python*\\python.exe', 'python.exe'):
+                    for match in glob.glob(os.path.join(base, pattern)):
+                        if _is_real_python(match):
+                            return match
+
+        raise RuntimeError(
+            'Could not find a working Python installation. '
+            'Please ensure Python is installed and added to PATH.'
+        )
     return sys.executable
 
 
@@ -1004,7 +1028,17 @@ def main():
     else:
         # -- Browser fallback --
         if '--no-browser' not in sys.argv:
-            threading.Timer(0.7, lambda: webbrowser.open(url)).start()
+            def _open_browser(u):
+                import time as _t; _t.sleep(0.7)
+                try:
+                    if PLATFORM == 'Windows':
+                        import os as _os
+                        _os.startfile(u)
+                    else:
+                        webbrowser.open(u)
+                except Exception:
+                    webbrowser.open(u)
+            threading.Thread(target=_open_browser, args=(url,), daemon=True).start()
             print(f'\n  Wizard -> {url}  (opening in browser...)')
         else:
             print(f'\n  Wizard -> {url}')
